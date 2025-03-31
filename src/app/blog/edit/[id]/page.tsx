@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React, { useEffect, useRef, use } from "react";
+import { resolve } from "path";
+import React, { useEffect, useRef } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
 const editBlog = async(
@@ -20,14 +21,15 @@ const editBlog = async(
     return res.json();
 };
 
-const getBlogById = async(id: number) => {
-    const res = await fetch(`http://localhost:3000/api/blog/${id}`);
+// const getBlogById = async ({ params }: { params: Promise<{ id:number }> }) => {
+const getBlogById = async (id:number) => {
+const res = await fetch(`http://localhost:3000/api/blog/${id}`);
     const data = await res.json();
-    return data.post;
+    console.log(data);
+    return data.posts;
 };
 
-const EditPost = (props: {params: Promise<{ id: number }> }) => {
-    const params = use(props.params);
+const EditPost = ({ params }: { params: { id: number } }) => {
     const router = useRouter();
     const titleRef = useRef<HTMLInputElement | null>(null);
     const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
@@ -49,17 +51,24 @@ const EditPost = (props: {params: Promise<{ id: number }> }) => {
     };
 
     useEffect(() => {
-        getBlogById(params.id)
-        .then((data) =>{
-            if (titleRef.current && descriptionRef.current) {
+        const fetchData = async () => {
+            const resolveParams = await params;
+            // console.log(resolveParams);
+            getBlogById(resolveParams.id)
+            .then((data) =>{
+                console.log(data);
+                // console.log(resolveParams.id);
+                if (titleRef.current && descriptionRef.current) {
                 titleRef.current.value = data.title;
-            descriptionRef.current.value = data.description;
+                descriptionRef.current.value = data.description;
+            }
+        })
+            .catch(err => {
+                toast.error("エラーが発生しました。", { id: "1" })
+            });   
         }
-    })
-        .catch(err => {
-            toast.error("エラーが発生しました。", { id: "1" })
-        });
-    },[]);
+        fetchData();
+    },[params]);
 
     return (
     <>
